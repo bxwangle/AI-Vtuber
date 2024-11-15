@@ -1611,8 +1611,7 @@ def start_server():
 
     # 针对对接LiveTalking(metahuman-stream)特殊处理
     if config.get("visual_body") == "metahuman_stream":
-        # 创建线程定时请求LiveTalking的is_speaking接口，判断是否有音频在播放
-        def run_metahuman_stream_is_speaking_schedule():
+        def metahuman_stream_is_speaking():
             global wait_play_audio_num
 
             try:
@@ -1620,7 +1619,7 @@ def start_server():
                 url = urljoin(
                     config.get("metahuman_stream", "api_ip_port"), "is_speaking"
                 )
-                resp_json = common.send_request(url, 'POST', {"sessionid": 0})
+                resp_json = common.send_request(url, 'POST', {"sessionid": 0}, timeout=5)
                 if resp_json and resp_json["code"] == 0:
                     if resp_json["data"]:
                         logger.debug("LiveTalking有音频在播放")
@@ -1633,17 +1632,24 @@ def start_server():
                 logger.error(traceback.format_exc())
                 logger.error("请求LiveTalking is_speaking接口失败")
 
-        interval = 3
-        try:
-            schedule.every(interval).seconds.do(
-                partial(run_metahuman_stream_is_speaking_schedule)
-            )
-        except Exception as e:
-            logger.error(traceback.format_exc())
+        # 创建线程定时请求LiveTalking的is_speaking接口，判断是否有音频在播放
+        def run_metahuman_stream_is_speaking_schedule():
+            interval = 3
+            try:
+                schedule.every(interval).seconds.do(
+                    partial(metahuman_stream_is_speaking)
+                )
+            except Exception as e:
+                logger.error(traceback.format_exc())
 
-        while True:
-            schedule.run_pending()                
+            while True:
+                schedule.run_pending()    
 
+        run_metahuman_stream_is_speaking_schedule_thread = threading.Thread(
+            target=lambda: run_metahuman_stream_is_speaking_schedule()
+        )
+        run_metahuman_stream_is_speaking_schedule_thread.start()
+    
     logger.info(f"当前平台：{platform}")
 
     if platform == "bilibili":

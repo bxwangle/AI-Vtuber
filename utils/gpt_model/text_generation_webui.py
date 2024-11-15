@@ -103,7 +103,7 @@ class TEXT_GENERATION_WEBUI:
 
                 if response.status_code == 200:
                     result = response.json()['results'][0]['history']
-                    # logging.info(json.dumps(result, indent=4))
+                    # logger.info(json.dumps(result, indent=4))
                     # print(result['visible'][-1][1])
                     resp_content = result['visible'][-1][1]
 
@@ -113,7 +113,7 @@ class TEXT_GENERATION_WEBUI:
                             # 统计字符数
                             total_chars = sum(len(item) for sublist in self.history['internal'] for item in sublist)
                             total_chars += sum(len(item) for sublist in self.history['visible'] for item in sublist)
-                            logging.info(f"total_chars={total_chars}")
+                            logger.info(f"total_chars={total_chars}")
                             # 如果大于限定最大历史数，就剔除第一个元素
                             if total_chars > self.history_max_len:
                                 self.history = self.remove_first_group(self.history)
@@ -125,7 +125,7 @@ class TEXT_GENERATION_WEBUI:
                 else:
                     return None
             except Exception as e:
-                logging.error(traceback.format_exc())
+                logger.error(traceback.format_exc())
                 return None
         else:
             try:
@@ -200,11 +200,11 @@ class TEXT_GENERATION_WEBUI:
                     # "grammar_string": ""
                 }
 
-                logging.debug(data)
+                logger.debug(data)
 
                 response = requests.post(url, headers=headers, json=data, verify=False)
                 resp_json = response.json()
-                logging.debug(resp_json)
+                logger.debug(resp_json)
 
                 resp_content = resp_json['choices'][0]['message']['content']
                 # 过滤多余的 \n
@@ -226,7 +226,7 @@ class TEXT_GENERATION_WEBUI:
 
                 return resp_content
             except Exception as e:
-                logging.error(traceback.format_exc())
+                logger.error(traceback.format_exc())
                 return None
 
 
@@ -279,5 +279,5 @@ class TEXT_GENERATION_WEBUI:
             else:
                 return None
         except Exception as e:
-            logging.error(e)
+            logger.error(e)
             return None
